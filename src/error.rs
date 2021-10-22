@@ -5,6 +5,7 @@ pub enum Error<'a> {
     InvalidArgs(&'a str),
     CouldNotSpawnProcess,
     ProcessFailed(String),
+    ProcessErrExit(i32),
 }
 
 impl From<Error<'_>> for i32 {
@@ -13,6 +14,7 @@ impl From<Error<'_>> for i32 {
             Error::InvalidArgs(_) => 1,
             Error::CouldNotSpawnProcess => 2,
             Error::ProcessFailed(_) => 4,
+            Error::ProcessErrExit(code) => code,
         }
     }
 }
@@ -23,6 +25,9 @@ impl<'a> Display for Error<'a> {
             Error::InvalidArgs(msg) => write!(f, "Invalid arguments: {}", msg),
             Error::CouldNotSpawnProcess => write!(f, "Could not spawn child process"),
             Error::ProcessFailed(msg) => write!(f, "Process failed: {}", msg),
+            Error::ProcessErrExit(code) => {
+                write!(f, "Target command returned non-zero exit code: {}", code)
+            }
         }
     }
 }
@@ -40,8 +45,8 @@ impl<'a> Termination for Exit<'a> {
         match self.0 {
             Ok(_) => 0,
             Err(err) => {
-                eprintln!("{}", err);
                 println!("\x1B[?1049l");
+                eprintln!("{}", err);
                 err.into()
             }
         }
