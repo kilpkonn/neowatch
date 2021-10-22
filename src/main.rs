@@ -5,17 +5,19 @@ use crate::error::Exit;
 
 mod args;
 mod error;
+mod neowatch;
+mod signal;
 
 fn main() -> error::Exit<'static> {
     let args = match Args::from_env() {
         Ok(args) => args,
-        Err(err) => return  Exit::from(Err(err)),
+        Err(err) => return Exit::from(Err(err)),
     };
 
-    println!("Cmd: {}", args.cmd);
+    signal::setup_handlers();
 
-    for a in args.cmd_args {
-        println!("Args: {}", a);
-    }
-    Exit::from(Ok(()))
+    println!("\x1B[?1049h");
+    let res = neowatch::run(args);
+
+    Exit::from(res)
 }

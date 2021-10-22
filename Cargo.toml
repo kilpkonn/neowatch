@@ -10,3 +10,4 @@ name = "neowatch"
 
 
 [dependencies]
+libc = "0.2"

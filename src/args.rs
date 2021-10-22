@@ -37,7 +37,7 @@ impl Args {
                 }
             }
         }
-        
+
         if args_vec.len() < 1 {
             return Err(Error::InvalidArgs("No Target command!"));
         }

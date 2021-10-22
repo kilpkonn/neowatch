@@ -1,14 +1,18 @@
-use std::process::Termination;
 use std::fmt::Display;
+use std::process::Termination;
 
 pub enum Error<'a> {
     InvalidArgs(&'a str),
+    CouldNotSpawnProcess,
+    ProcessFailed(String),
 }
 
 impl From<Error<'_>> for i32 {
     fn from(err: Error) -> Self {
         match err {
-            Error::InvalidArgs(_) => -1,
+            Error::InvalidArgs(_) => 1,
+            Error::CouldNotSpawnProcess => 2,
+            Error::ProcessFailed(_) => 4,
         }
     }
 }
@@ -17,6 +21,8 @@ impl<'a> Display for Error<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Error::InvalidArgs(msg) => write!(f, "Invalid arguments: {}", msg),
+            Error::CouldNotSpawnProcess => write!(f, "Could not spawn child process"),
+            Error::ProcessFailed(msg) => write!(f, "Process failed: {}", msg),
         }
     }
 }
