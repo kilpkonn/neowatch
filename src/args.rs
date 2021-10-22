@@ -7,6 +7,7 @@ pub struct Args {
     pub show_diff: bool,
     pub precise_mode: bool,
     pub exit_on_err: bool,
+    pub exit_on_change: bool,
     pub cmd: String,
     pub cmd_args: Vec<String>,
 }
@@ -41,8 +42,10 @@ impl Args {
                     args.show_diff = true;
                 } else if arg == "-p" || arg == "--precise" {
                     args.precise_mode = true;
-                } else if arg == "-e" || arg == "errexit" {
+                } else if arg == "-e" || arg == "--errexit" {
                     args.exit_on_err = true;
+                } else if arg == "-g" || arg == "--chgexit" {
+                    args.exit_on_change = true;
                 }
             }
         }
@@ -65,6 +68,7 @@ impl Default for Args {
             show_diff: false,
             precise_mode: false,
             exit_on_err: false,
+            exit_on_change: false,
             cmd: String::from("neowatch"),
             cmd_args: vec![String::from("--help")],
         }

@@ -43,7 +43,10 @@ impl<'a> From<Result<(), Error<'a>>> for Exit<'a> {
 impl<'a> Termination for Exit<'a> {
     fn report(self) -> i32 {
         match self.0 {
-            Ok(_) => 0,
+            Ok(_) => {
+                println!("\x1B[?1049l");
+                0
+            },
             Err(err) => {
                 println!("\x1B[?1049l");
                 eprintln!("{}", err);
