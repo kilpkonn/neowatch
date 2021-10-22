@@ -1,4 +1,5 @@
 #![feature(termination_trait_lib)]
+#![feature(int_abs_diff)]
 
 use crate::args::Args;
 use crate::error::Exit;

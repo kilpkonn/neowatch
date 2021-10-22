@@ -41,6 +41,7 @@ impl<'a> Termination for Exit<'a> {
             Ok(_) => 0,
             Err(err) => {
                 eprintln!("{}", err);
+                println!("\x1B[?1049l");
                 err.into()
             }
         }
