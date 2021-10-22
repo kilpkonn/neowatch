@@ -4,7 +4,8 @@ use crate::error::Error;
 
 pub struct Args {
     pub interval: Duration,
-    pub differences: bool,
+    pub show_diff: bool,
+    pub precise_mode: bool,
     pub cmd: String,
     pub cmd_args: Vec<String>,
 }
@@ -36,7 +37,9 @@ impl Args {
                         return Err(Error::InvalidArgs("Invalid interval!"));
                     };
                 } else if arg == "-d" || arg == "--differences" {
-                    args.differences = true;
+                    args.show_diff = true;
+                } else if arg == "-p" || arg == "--precise" {
+                    args.precise_mode = true;
                 }
             }
         }
@@ -56,7 +59,8 @@ impl Default for Args {
     fn default() -> Self {
         Args {
             interval: Duration::from_secs(1),
-            differences: false,
+            show_diff: false,
+            precise_mode: false,
             cmd: String::from("neowatch"),
             cmd_args: vec![String::from("--help")],
         }

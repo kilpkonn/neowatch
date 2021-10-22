@@ -1,8 +1,7 @@
 use std::{
-    io::ErrorKind,
-    process::{Child, Command, Stdio},
+    process::{Command, Stdio},
     thread,
-    time::{Duration, Instant},
+    time::Instant,
 };
 
 use crate::{args::Args, error::Error};
@@ -14,38 +13,11 @@ const SPLIT_LINES: &str = "\n";
 const SPLIT_WORDS: &str = " ";
 const SIMILARITY_THRESHOLD: f32 = 0.5;
 
-pub trait ChildProcess {
-    fn wait_or_timeout(&mut self, timeout: Duration) -> Result<i32, ErrorKind>;
-}
-
-impl ChildProcess for Child {
-    fn wait_or_timeout(&mut self, timeout: Duration) -> Result<i32, ErrorKind> {
-        let start = Instant::now();
-
-        // try_wait() does not drop stdin unlike wait and may cause deadlock
-        drop(self.stdin.take());
-        loop {
-            match self.try_wait() {
-                Ok(Some(status)) => return Ok(status.code().unwrap_or(0)),
-                Err(err) => return Err(err.kind()),
-                _ => {}
-            };
-
-            if start.elapsed() >= timeout {
-                break;
-            }
-
-            thread::sleep(Duration::from_millis(100));
-        }
-
-        return Err(ErrorKind::TimedOut);
-    }
-}
-
 pub fn run(args: Args) -> Result<(), Error<'static>> {
     let mut last_data = String::new();
     loop {
         println!("\x1B[2J\x1B[1;1H");
+        let start = Instant::now();
         let process = Command::new(&args.cmd)
             .args(&args.cmd_args)
             .stdin(Stdio::inherit())
@@ -61,7 +33,7 @@ pub fn run(args: Args) -> Result<(), Error<'static>> {
         let data = String::from_utf8(output.stdout)
             .map_err(|_| Error::ProcessFailed("Invalid string was returned".to_string()))?;
 
-        if args.differences {
+        if args.show_diff {
             highlight_diffs(&data, &last_data)
                 .into_iter()
                 .for_each(|s| print!("{}", s));
@@ -71,7 +43,12 @@ pub fn run(args: Args) -> Result<(), Error<'static>> {
             println!("{}", data)
         }
 
-        thread::sleep(args.interval);
+        let sleep_duration = if args.precise_mode {
+            args.interval.saturating_sub(start.elapsed())
+        } else {
+            args.interval
+        };
+        thread::sleep(sleep_duration);
     }
 }
 
