@@ -22,6 +22,7 @@ FLAGS:
     -p, --precise        Attempt to run command with precise intervals
     -e, --errexit        Exit if command has non-zero exit status
     -g, --chgexit        Exit when output of command changes
+    -v, --version        Show app version 
 
 OPTIONS:
     -n, --interval <secs>    Seconds to wait between updates
@@ -37,6 +38,11 @@ fn main() -> error::Exit<'static> {
 
     if args.show_help {
         print!("{}", HELP_STR);
+        return Exit::from(Ok(()));
+    }
+    
+    if args.show_version {
+        println!("{}", env!("CARGO_PKG_VERSION"));
         return Exit::from(Ok(()));
     }
 

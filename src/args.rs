@@ -9,6 +9,7 @@ pub struct Args {
     pub exit_on_err: bool,
     pub exit_on_change: bool,
     pub show_help: bool,
+    pub show_version: bool,
     pub cmd: String,
     pub cmd_args: Vec<String>,
 }
@@ -49,6 +50,8 @@ impl Args {
                     args.exit_on_change = true;
                 } else if arg == "-h" || arg == "--help" {
                     args.show_help = true;
+                } else if arg == "-v" || arg == "--version" {
+                    args.show_version = true;
                 }
             }
         }
@@ -73,6 +76,7 @@ impl Default for Args {
             exit_on_err: false,
             exit_on_change: false,
             show_help: false,
+            show_version: false,
             cmd: String::from("neowatch"),
             cmd_args: vec![String::from("--help")],
         }

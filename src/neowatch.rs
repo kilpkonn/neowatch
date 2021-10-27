@@ -65,10 +65,11 @@ fn highlight_diffs<'a>(input: &'a str, last: &'a str) -> Vec<&'a str> {
     let last_lines: Vec<&str> = last.split(SPLIT_LINES).collect();
     let mut res: Vec<&str> = Vec::new();
 
-    for line in input.split(SPLIT_LINES) {
+    for (idx, line) in input.split(SPLIT_LINES).enumerate() {
         if let Some((last_line, _)) = last_lines
             .iter()
-            .map(|l| (l, similarity(line, l)))
+            .enumerate()
+            .map(|(i, l)| (l, similarity(line, l) / (1.0 + idx.abs_diff(i) as f32)))
             .max_by(|(_, s1), (_, s2)| s1.partial_cmp(s2).unwrap_or(std::cmp::Ordering::Equal))
         {
             for (idx, word) in line.split(SPLIT_WORDS).enumerate() {
@@ -103,7 +104,11 @@ fn highlight_diffs<'a>(input: &'a str, last: &'a str) -> Vec<&'a str> {
 }
 
 fn similarity(a: &str, b: &str) -> f32 {
-    let length = if a.len() > b.len() { a.len() } else { b.len() };
-    let same_count = a.chars().zip(b.chars()).filter(|(x, y)| x == y).count();
+    let (length, same_count) = a
+        .chars()
+        .zip(b.chars())
+        .fold((1, 1), |(total, matched), (x, y)| {
+            (total + 1, if x == y { matched + 1 } else { matched })
+        });
     same_count as f32 / length as f32
 }
