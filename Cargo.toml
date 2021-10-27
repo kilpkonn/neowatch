@@ -3,10 +3,11 @@ name = "neowatch"
 description = "Modern alternative to watch command"
 version = "0.1.0"
 authors = ["Tavo Annus <tavo.annus@gmail.com>"]
-license = "LGPLv2.1"
+license = "LGPL-2.1"
 readme = "README.md"
 keywords = ["watch", "neowatch"]
 categories = ["command-line-utilities"]
+repsitory = "https://github.com/kilpkonn/neowatch"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
