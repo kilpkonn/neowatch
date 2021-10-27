@@ -8,6 +8,7 @@ pub struct Args {
     pub precise_mode: bool,
     pub exit_on_err: bool,
     pub exit_on_change: bool,
+    pub show_help: bool,
     pub cmd: String,
     pub cmd_args: Vec<String>,
 }
@@ -26,7 +27,7 @@ impl Args {
                 continue;
             }
             if let Some(arg) = args_vec.get(i) {
-                if !arg.starts_with("-") {
+                if !arg.starts_with('-') {
                     args_vec.drain(0..i);
                     break;
                 }
@@ -46,11 +47,13 @@ impl Args {
                     args.exit_on_err = true;
                 } else if arg == "-g" || arg == "--chgexit" {
                     args.exit_on_change = true;
+                } else if arg == "-h" || arg == "--help" {
+                    args.show_help = true;
                 }
             }
         }
 
-        if args_vec.len() < 1 {
+        if args_vec.is_empty() {
             return Err(Error::InvalidArgs("No Target command!"));
         }
 
@@ -69,6 +72,7 @@ impl Default for Args {
             precise_mode: false,
             exit_on_err: false,
             exit_on_change: false,
+            show_help: false,
             cmd: String::from("neowatch"),
             cmd_args: vec![String::from("--help")],
         }

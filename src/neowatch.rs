@@ -37,19 +37,18 @@ pub fn run(args: Args) -> Result<(), Error<'static>> {
             highlight_diffs(&data, &last_data)
                 .into_iter()
                 .for_each(|s| print!("{}", s));
-            println!("");
+            println!();
         } else {
             println!("{}", data)
         }
-        
-        if args.exit_on_change && last_data != "" && data != last_data {
+
+        if args.exit_on_change && !last_data.is_empty() && data != last_data {
             return Ok(());
         }
 
         if args.exit_on_err && !output.status.success() {
             return Err(Error::ProcessErrExit(output.status.code().unwrap_or(-1)));
         }
-
 
         let sleep_duration = if args.precise_mode {
             args.interval.saturating_sub(start.elapsed())
