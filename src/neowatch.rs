@@ -1,22 +1,20 @@
-use std::{
-    process::{Command, Stdio},
-    thread,
-    time::Instant,
-};
+use std::{io::{self, Write}, process::{Command, Stdio}, thread, time::Instant};
+
+use termcolor::{Buffer, BufferWriter, ColorChoice, WriteColor};
 
 use crate::{args::Args, error::Error};
 
-const COLOR_CHANGE: &str = "\x1b[36m";
-const COLOR_ADD: &str = "\x1b[32m";
-const COLOR_END: &str = "\x1b[0m";
 const SPLIT_LINES: &str = "\n";
 const SPLIT_WORDS: &str = " ";
 const SIMILARITY_THRESHOLD: f32 = 0.5;
 
 pub fn run(args: Args) -> Result<(), Error<'static>> {
+    let bufwtr = BufferWriter::stdout(ColorChoice::Always);
+    let mut buffer = bufwtr.buffer();
     let mut last_data = String::new();
     loop {
-        println!("\x1B[2J\x1B[1;1H");
+        write!(&mut buffer, "\x1B[2J\x1B[1;1H")
+            .map_err(|e| Error::IoError(e))?;
         let start = Instant::now();
         let process = Command::new(&args.cmd)
             .args(&args.cmd_args)
@@ -34,12 +32,11 @@ pub fn run(args: Args) -> Result<(), Error<'static>> {
             .map_err(|_| Error::ProcessFailed("Invalid string was returned".to_string()))?;
 
         if args.show_diff {
-            highlight_diffs(&data, &last_data)
-                .into_iter()
-                .for_each(|s| print!("{}", s));
-            println!();
+            highlight_diffs(&mut buffer, &data, &last_data, &args)
+                .map_err(|e| Error::IoError(e))?;
         } else {
-            println!("{}", data)
+            write!(&mut buffer, "{}", data)
+                .map_err(|e| Error::IoError(e))?;
         }
 
         if args.exit_on_change && !last_data.is_empty() && data != last_data {
@@ -56,14 +53,16 @@ pub fn run(args: Args) -> Result<(), Error<'static>> {
             args.interval
         };
 
+        bufwtr.print(&buffer)
+            .map_err(|e| Error::IoError(e))?;
+
         last_data = data;
         thread::sleep(sleep_duration);
     }
 }
 
-fn highlight_diffs<'a>(input: &'a str, last: &'a str) -> Vec<&'a str> {
+fn highlight_diffs<'a>(buffer: &mut Buffer, input: &'a str, last: &'a str, args: &Args) -> io::Result<()> {
     let last_lines: Vec<&str> = last.split(SPLIT_LINES).collect();
-    let mut res: Vec<&str> = Vec::new();
 
     for (idx, line) in input.split(SPLIT_LINES).enumerate() {
         if let Some((last_line, _)) = last_lines
@@ -74,7 +73,7 @@ fn highlight_diffs<'a>(input: &'a str, last: &'a str) -> Vec<&'a str> {
         {
             for (idx, word) in line.split(SPLIT_WORDS).enumerate() {
                 if idx != 0 {
-                    res.push(SPLIT_WORDS)
+                    write!(buffer, "{}", SPLIT_WORDS)?;
                 };
 
                 let last_word_similarity = last_line
@@ -85,22 +84,21 @@ fn highlight_diffs<'a>(input: &'a str, last: &'a str) -> Vec<&'a str> {
                     .unwrap_or(0.0);
 
                 if last_word_similarity >= 1.0 {
-                    res.push(word)
+                    write!(buffer, "{}", word)?;
                 } else if last_word_similarity > SIMILARITY_THRESHOLD {
-                    res.push(COLOR_CHANGE);
-                    res.push(word);
-                    res.push(COLOR_END);
+                    buffer.set_color(&args.color_change)?;
+                    write!(buffer, "{}", word)?;
+                    buffer.reset()?;
                 } else {
-                    res.push(COLOR_ADD);
-                    res.push(word);
-                    res.push(COLOR_END);
+                    buffer.set_color(&args.color_change)?;
+                    write!(buffer, "{}", word)?;
+                    buffer.reset()?;
                 }
             }
-            res.push(SPLIT_LINES);
+            write!(buffer, "{}", SPLIT_LINES)?;
         };
     }
-
-    res
+    Ok(())
 }
 
 fn similarity(a: &str, b: &str) -> f32 {

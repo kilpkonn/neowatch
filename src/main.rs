@@ -18,7 +18,7 @@ fn main() -> error::Exit<'static> {
     let args = Args::from(opts);
 
     signal::setup_handlers();
-
+    
     println!("\x1B[?1049h");
     let res = neowatch::run(args);
 

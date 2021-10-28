@@ -1,5 +1,6 @@
 use std::time::Duration;
 use clap::{Parser, crate_version, crate_authors, crate_description};
+use termcolor::{Color, ColorSpec};
 
 
 #[derive(Parser)]
@@ -35,18 +36,22 @@ pub struct Args {
     pub precise_mode: bool,
     pub exit_on_err: bool,
     pub exit_on_change: bool,
+    pub color_change: ColorSpec,
     pub cmd: String,
     pub cmd_args: Vec<String>,
 }
 
 impl From<Opts> for Args {
     fn from(o: Opts) -> Self {
+        let mut col = ColorSpec::new();
+        col.set_fg(Some(Color::Cyan));
         Args {
             interval: Duration::from_secs_f32(o.interval),
             show_diff: o.show_diff,
             precise_mode: o.precise_mode,
             exit_on_err: o.exit_on_err,
             exit_on_change: o.exit_on_change,
+            color_change: col,
             cmd: o.cmd,
             cmd_args: o.cmd_args,
         }
