@@ -1,6 +1,33 @@
 use std::time::Duration;
+use clap::{Parser, crate_version, crate_authors, crate_description};
 
-use crate::error::Error;
+
+#[derive(Parser)]
+#[clap(version = crate_version!(), author = crate_authors!(), about = crate_description!())]
+pub struct Opts {
+    /// Update insterval
+    #[clap(short = 'n', long = "interval", default_value = "1.0")]
+    pub interval: f32,
+    /// Highlight differences since last update
+    #[clap(short = 'd', long = "differences")]
+    pub show_diff: bool,
+    /// Try to run command at precise intervals
+    #[clap(short = 'p', long = "precise")]
+    pub precise_mode: bool,
+    /// Exit on non-zero return code
+    #[clap(short = 'e', long = "errexit")]
+    pub exit_on_err: bool,
+    /// Exit on output change
+    #[clap(short = 'g', long = "chgexit")]
+    pub exit_on_change: bool,
+    /// Target command
+    #[clap(value_name = "COMMAND")]
+    pub cmd: String,
+    /// Arguments for target command
+    #[clap(value_name = "CMD_ARGS")]
+    pub cmd_args: Vec<String>,
+}
+
 
 pub struct Args {
     pub interval: Duration,
@@ -8,77 +35,22 @@ pub struct Args {
     pub precise_mode: bool,
     pub exit_on_err: bool,
     pub exit_on_change: bool,
-    pub show_help: bool,
-    pub show_version: bool,
     pub cmd: String,
     pub cmd_args: Vec<String>,
 }
 
-impl Args {
-    pub fn from_env() -> Result<Self, Error<'static>> {
-        let mut args_vec: Vec<String> = std::env::args().collect();
-        args_vec.remove(0);
-
-        let mut args: Args = Default::default();
-
-        let mut skip = false;
-        for i in 0..args_vec.len() {
-            if skip {
-                skip = false;
-                continue;
-            }
-            if let Some(arg) = args_vec.get(i) {
-                if !arg.starts_with('-') {
-                    args_vec.drain(0..i);
-                    break;
-                }
-                if arg == "-n" || arg == "--interval" {
-                    if let Some(interval) = args_vec.get(i + 1).and_then(|s| s.parse::<f32>().ok())
-                    {
-                        args.interval = Duration::from_secs_f32(interval);
-                        skip = true;
-                    } else {
-                        return Err(Error::InvalidArgs("Invalid interval!"));
-                    };
-                } else if arg == "-d" || arg == "--differences" {
-                    args.show_diff = true;
-                } else if arg == "-p" || arg == "--precise" {
-                    args.precise_mode = true;
-                } else if arg == "-e" || arg == "--errexit" {
-                    args.exit_on_err = true;
-                } else if arg == "-g" || arg == "--chgexit" {
-                    args.exit_on_change = true;
-                } else if arg == "-h" || arg == "--help" {
-                    args.show_help = true;
-                } else if arg == "-v" || arg == "--version" {
-                    args.show_version = true;
-                }
-            }
-        }
-
-        if args_vec.is_empty() {
-            return Err(Error::InvalidArgs("No Target command!"));
-        }
-
-        args.cmd = args_vec.remove(0);
-        args.cmd_args = args_vec;
-
-        Ok(args)
-    }
-}
-
-impl Default for Args {
-    fn default() -> Self {
+impl From<Opts> for Args {
+    fn from(o: Opts) -> Self {
         Args {
-            interval: Duration::from_secs(1),
-            show_diff: false,
-            precise_mode: false,
-            exit_on_err: false,
-            exit_on_change: false,
-            show_help: false,
-            show_version: false,
-            cmd: String::from("neowatch"),
-            cmd_args: vec![String::from("--help")],
+            interval: Duration::from_secs_f32(o.interval),
+            show_diff: o.show_diff,
+            precise_mode: o.precise_mode,
+            exit_on_err: o.exit_on_err,
+            exit_on_change: o.exit_on_change,
+            cmd: o.cmd,
+            cmd_args: o.cmd_args,
         }
     }
 }
+
+

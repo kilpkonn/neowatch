@@ -1,6 +1,9 @@
 #![feature(termination_trait_lib)]
 #![feature(int_abs_diff)]
 
+use args::Opts;
+use clap::Parser;
+
 use crate::args::Args;
 use crate::error::Exit;
 
@@ -9,42 +12,10 @@ mod error;
 mod neowatch;
 mod signal;
 
-const HELP_STR: &str = "Neowatch
-Tavo Annus <tavo.annus@gmail.com>
-Modern alternative to watch.
-
-USAGE:
-    neowatch [FLAGS] [OPTIONS] <COMMAND> [CMMAND ARGS...]
-
-FLAGS:
-    -h, --help           Print help message
-    -d, --differences    Highlight changes between updates
-    -p, --precise        Attempt to run command with precise intervals
-    -e, --errexit        Exit if command has non-zero exit status
-    -g, --chgexit        Exit when output of command changes
-    -v, --version        Show app version 
-
-OPTIONS:
-    -n, --interval <secs>    Seconds to wait between updates
-
-ARGS:
-    COMMAND    The command to execute";
 
 fn main() -> error::Exit<'static> {
-    let args = match Args::from_env() {
-        Ok(args) => args,
-        Err(err) => return Exit::from(Err(err)),
-    };
-
-    if args.show_help {
-        print!("{}", HELP_STR);
-        return Exit::from(Ok(()));
-    }
-    
-    if args.show_version {
-        println!("{}", env!("CARGO_PKG_VERSION"));
-        return Exit::from(Ok(()));
-    }
+    let opts = Opts::parse();
+    let args = Args::from(opts);
 
     signal::setup_handlers();
 
