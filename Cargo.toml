@@ -1,16 +1,23 @@
 [package]
 name = "neowatch"
-description = "Modern alternative to watch command"
-version = "0.1.0"
+description = "A modern alternative to watch command"
+version = "0.1.1"
 authors = ["Tavo Annus <tavo.annus@gmail.com>"]
 license = "LGPL-2.1"
 readme = "README.md"
 keywords = ["watch", "neowatch"]
 categories = ["command-line-utilities"]
-repsitory = "https://github.com/kilpkonn/neowatch"
+repository = "https://github.com/kilpkonn/neowatch"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[profile.release]
+opt-level = 3
+lto = true
+debug = false
+codegen-units = 1
+panic = "abort"
 
 [[bin]]
 name = "neowatch"
@@ -18,3 +25,5 @@ name = "neowatch"
 
 [dependencies]
 libc = "0.2"
+clap = { version = "3.0.0-beta.5", default-features = false, features = ["std"] }
+termcolor = "1.1"
