@@ -1,4 +1,9 @@
-use std::{io::{self, Write}, process::{Command, Stdio}, thread, time::Instant};
+use std::{
+    io::{self, Write},
+    process::{Command, Stdio},
+    thread,
+    time::Instant,
+};
 
 use termcolor::{Buffer, BufferWriter, ColorChoice, WriteColor};
 
@@ -7,14 +12,14 @@ use crate::{args::Args, error::Error};
 const SPLIT_LINES: &str = "\n";
 const SPLIT_WORDS: &str = " ";
 const SIMILARITY_THRESHOLD: f32 = 0.5;
+const SIMILARITY_ALPHA: f32 = 5.0;
 
 pub fn run(args: Args) -> Result<(), Error<'static>> {
     let bufwtr = BufferWriter::stdout(ColorChoice::Always);
     let mut buffer = bufwtr.buffer();
     let mut last_data = String::new();
     loop {
-        write!(&mut buffer, "\x1B[2J\x1B[1;1H")
-            .map_err(Error::Io)?;
+        write!(&mut buffer, "\x1B[2J\x1B[1;1H").map_err(Error::Io)?;
         let start = Instant::now();
         let process = Command::new(&args.cmd)
             .args(&args.cmd_args)
@@ -32,11 +37,9 @@ pub fn run(args: Args) -> Result<(), Error<'static>> {
             .map_err(|_| Error::ProcessFailed("Invalid string was returned".to_string()))?;
 
         if args.show_diff {
-            highlight_diffs(&mut buffer, &data, &last_data, &args)
-                .map_err(Error::Io)?;
+            highlight_diffs(&mut buffer, &data, &last_data, &args).map_err(Error::Io)?;
         } else {
-            write!(&mut buffer, "{}", data)
-                .map_err(Error::Io)?;
+            write!(&mut buffer, "{}", data).map_err(Error::Io)?;
         }
 
         if args.exit_on_change && !last_data.is_empty() && data != last_data {
@@ -53,15 +56,19 @@ pub fn run(args: Args) -> Result<(), Error<'static>> {
             args.interval
         };
 
-        bufwtr.print(&buffer)
-            .map_err(Error::Io)?;
+        bufwtr.print(&buffer).map_err(Error::Io)?;
 
         last_data = data;
         thread::sleep(sleep_duration);
     }
 }
 
-fn highlight_diffs<'a>(buffer: &mut Buffer, input: &'a str, last: &'a str, args: &Args) -> io::Result<()> {
+fn highlight_diffs<'a>(
+    buffer: &mut Buffer,
+    input: &'a str,
+    last: &'a str,
+    args: &Args,
+) -> io::Result<()> {
     let last_lines: Vec<&str> = last.split(SPLIT_LINES).collect();
 
     for (idx, line) in input.split(SPLIT_LINES).enumerate() {
@@ -76,17 +83,36 @@ fn highlight_diffs<'a>(buffer: &mut Buffer, input: &'a str, last: &'a str, args:
                     write!(buffer, "{}", SPLIT_WORDS)?;
                 };
 
-                let last_word_similarity = last_line
+                let (last_word, last_word_similarity) = last_line
                     .split(SPLIT_WORDS)
                     .enumerate()
-                    .map(|(i, w)| similarity(w, word) / (1.0 + idx.abs_diff(i) as f32).sqrt())
-                    .max_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal))
-                    .unwrap_or(0.0);
+                    .map(|(i, w)| {
+                        (
+                            w,
+                            (SIMILARITY_ALPHA + similarity(w, word))
+                                / (SIMILARITY_ALPHA + (1.0 + idx.abs_diff(i) as f32).sqrt()),
+                        )
+                    })
+                    .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal))
+                    .unwrap_or(("", 0.0));
 
                 if last_word_similarity + f32::EPSILON >= 1.0 {
                     write!(buffer, "{}", word)?;
                 } else if last_word_similarity > SIMILARITY_THRESHOLD {
-                    buffer.set_color(&args.color_change)?;
+                    let col = if let (Some(n), Some(m), true) = (
+                        find_numeric(word, args.radix),
+                        find_numeric(last_word, args.radix),
+                        args.show_number_diff,
+                    ) {
+                        if n > m {
+                            &args.color_increase
+                        } else {
+                            &args.color_decrease
+                        }
+                    } else {
+                        &args.color_change
+                    };
+                    buffer.set_color(col)?;
                     write!(buffer, "{}", word)?;
                     buffer.reset()?;
                 } else {
@@ -109,4 +135,25 @@ fn similarity(a: &str, b: &str) -> f32 {
             (total + 1, if x == y { matched + 1 } else { matched })
         });
     same_count as f32 / length as f32
+}
+
+fn find_numeric(a: &str, base: u32) -> Option<f32> {
+    let mut start = None;
+    let mut end = None;
+    for (i, c) in a.char_indices() {
+        if c == '.' {
+            continue;
+        }
+        if c.is_digit(base) {
+            if start.is_none() {
+                start = Some(i);
+            }
+            end = Some(i);
+        }
+    }
+
+    match (start, end) {
+        (Some(s), Some(e)) => a[s..e].parse().ok(),
+        (_, _) => None,
+    }
 }

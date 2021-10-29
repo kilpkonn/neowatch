@@ -10,8 +10,12 @@ pub struct Args {
     pub precise_mode: bool,
     pub exit_on_err: bool,
     pub exit_on_change: bool,
+    pub show_number_diff: bool,
+    pub radix: u32,
     pub color_new: ColorSpec,
     pub color_change: ColorSpec,
+    pub color_increase: ColorSpec,
+    pub color_decrease: ColorSpec,
     pub cmd: String,
     pub cmd_args: Vec<String>,
 }
@@ -74,6 +78,32 @@ impl Args {
                     .value_name("COLOR")
                     .takes_value(true),
             )
+            .arg(
+                Arg::new("number_diff")
+                    .short('z')
+                    .long("number-changes")
+                    .about("Highlight number changes based on increase/decrease")
+                    .takes_value(false),
+            )
+            .arg(
+                Arg::new("radix")
+                    .long("radix")
+                    .about("Radix for numbers")
+                    .default_value("10")
+                    .takes_value(true),
+            )
+            .arg(
+                Arg::new("color_increase")
+                    .long("increase-color")
+                    .about("Color for increaseing numeric values")
+                    .takes_value(true),
+            )
+            .arg(
+                Arg::new("color_decrease")
+                    .long("decrease-color")
+                    .about("Color for decreasing numeric values")
+                    .takes_value(true),
+            )
             .get_matches();
 
         let interval = matches
@@ -86,9 +116,17 @@ impl Args {
         let precise_mode = matches.is_present("precise_mode");
         let exit_on_err = matches.is_present("exit_on_err");
         let exit_on_change = matches.is_present("exit_on_change");
+        let show_number_diff = matches.is_present("number_diff");
+
+        let radix = matches
+            .value_of("radix")
+            .and_then(|s| s.parse::<u32>().ok())
+            .unwrap_or(10);
 
         let mut color_new = ColorSpec::new();
         let mut color_change = ColorSpec::new();
+        let mut color_increase = ColorSpec::new();
+        let mut color_decrease = ColorSpec::new();
 
         let col_new = matches
             .value_of("color_new")
@@ -98,10 +136,22 @@ impl Args {
         let col_change = matches
             .value_of("color_change")
             .and_then(|s| FromStr::from_str(s).ok())
+            .unwrap_or(Color::Magenta);
+
+        let col_increase = matches
+            .value_of("color_increase")
+            .and_then(|s| FromStr::from_str(s).ok())
             .unwrap_or(Color::Cyan);
+
+        let col_decrease = matches
+            .value_of("color_decrease")
+            .and_then(|s| FromStr::from_str(s).ok())
+            .unwrap_or(Color::Red);
 
         color_new.set_fg(Some(col_new));
         color_change.set_fg(Some(col_change));
+        color_increase.set_fg(Some(col_increase));
+        color_decrease.set_fg(Some(col_decrease));
 
         let (cmd, cmd_args) = match matches.subcommand() {
             Some((external, ext_m)) => {
@@ -123,8 +173,12 @@ impl Args {
             precise_mode,
             exit_on_err,
             exit_on_change,
+            show_number_diff,
+            radix,
             color_new,
             color_change,
+            color_increase,
+            color_decrease,
             cmd,
             cmd_args,
         };
