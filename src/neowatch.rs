@@ -14,7 +14,7 @@ pub fn run(args: Args) -> Result<(), Error<'static>> {
     let mut last_data = String::new();
     loop {
         write!(&mut buffer, "\x1B[2J\x1B[1;1H")
-            .map_err(|e| Error::IoError(e))?;
+            .map_err(Error::Io)?;
         let start = Instant::now();
         let process = Command::new(&args.cmd)
             .args(&args.cmd_args)
@@ -33,10 +33,10 @@ pub fn run(args: Args) -> Result<(), Error<'static>> {
 
         if args.show_diff {
             highlight_diffs(&mut buffer, &data, &last_data, &args)
-                .map_err(|e| Error::IoError(e))?;
+                .map_err(Error::Io)?;
         } else {
             write!(&mut buffer, "{}", data)
-                .map_err(|e| Error::IoError(e))?;
+                .map_err(Error::Io)?;
         }
 
         if args.exit_on_change && !last_data.is_empty() && data != last_data {
@@ -54,7 +54,7 @@ pub fn run(args: Args) -> Result<(), Error<'static>> {
         };
 
         bufwtr.print(&buffer)
-            .map_err(|e| Error::IoError(e))?;
+            .map_err(Error::Io)?;
 
         last_data = data;
         thread::sleep(sleep_duration);
@@ -83,14 +83,14 @@ fn highlight_diffs<'a>(buffer: &mut Buffer, input: &'a str, last: &'a str, args:
                     .max_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal))
                     .unwrap_or(0.0);
 
-                if last_word_similarity >= 1.0 {
+                if last_word_similarity + f32::EPSILON >= 1.0 {
                     write!(buffer, "{}", word)?;
                 } else if last_word_similarity > SIMILARITY_THRESHOLD {
                     buffer.set_color(&args.color_change)?;
                     write!(buffer, "{}", word)?;
                     buffer.reset()?;
                 } else {
-                    buffer.set_color(&args.color_change)?;
+                    buffer.set_color(&args.color_new)?;
                     write!(buffer, "{}", word)?;
                     buffer.reset()?;
                 }

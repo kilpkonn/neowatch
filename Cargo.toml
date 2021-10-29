@@ -25,5 +25,5 @@ name = "neowatch"
 
 [dependencies]
 libc = "0.2"
-clap = "3.0.0-beta.5"
+clap = { version = "3.0.0-beta.5", default-features = false, features = ["std"] }
 termcolor = "1.1"

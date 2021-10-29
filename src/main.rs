@@ -1,8 +1,7 @@
 #![feature(termination_trait_lib)]
 #![feature(int_abs_diff)]
 
-use args::Opts;
-use clap::Parser;
+extern crate clap;
 
 use crate::args::Args;
 use crate::error::Exit;
@@ -14,8 +13,10 @@ mod signal;
 
 
 fn main() -> error::Exit<'static> {
-    let opts = Opts::parse();
-    let args = Args::from(opts);
+    let args = match Args::new() {
+        Ok(args) => args,
+        Err(err) => return Exit::from(Err(err)),
+    };
 
     signal::setup_handlers();
     
