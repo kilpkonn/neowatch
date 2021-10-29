@@ -1,4 +1,6 @@
-use std::time::Duration;
+use clap::{App, AppSettings, Arg};
+use std::{str::FromStr, time::Duration};
+use termcolor::{Color, ColorSpec};
 
 use crate::error::Error;
 
@@ -8,77 +10,124 @@ pub struct Args {
     pub precise_mode: bool,
     pub exit_on_err: bool,
     pub exit_on_change: bool,
-    pub show_help: bool,
-    pub show_version: bool,
+    pub color_new: ColorSpec,
+    pub color_change: ColorSpec,
     pub cmd: String,
     pub cmd_args: Vec<String>,
 }
 
 impl Args {
-    pub fn from_env() -> Result<Self, Error<'static>> {
-        let mut args_vec: Vec<String> = std::env::args().collect();
-        args_vec.remove(0);
+    pub fn new() -> Result<Self, Error<'static>> {
+        let matches = App::new("neowatch")
+            .version(env!("CARGO_PKG_VERSION"))
+            .author(env!("CARGO_PKG_AUTHORS"))
+            .about(env!("CARGO_PKG_DESCRIPTION"))
+            .setting(AppSettings::AllowExternalSubcommands)
+            .arg(
+                Arg::new("interval")
+                    .short('n')
+                    .long("interval")
+                    .value_name("SECS")
+                    .default_value("1.0")
+                    .about("Set update insterval")
+                    .takes_value(true),
+            )
+            .arg(
+                Arg::new("show_diff")
+                    .short('d')
+                    .long("differences")
+                    .about("Highlight differences since last update")
+                    .takes_value(false),
+            )
+            .arg(
+                Arg::new("precise")
+                    .short('p')
+                    .long("precise")
+                    .about("Attempt to run command at precise intervals")
+                    .takes_value(false),
+            )
+            .arg(
+                Arg::new("exit_on_err")
+                    .short('e')
+                    .long("errexit")
+                    .about("Exit on non-zero return code")
+                    .takes_value(false),
+            )
+            .arg(
+                Arg::new("exit_on_change")
+                    .short('g')
+                    .long("chgexit")
+                    .about("Exit on output change")
+                    .takes_value(false),
+            )
+            .arg(
+                Arg::new("color_new")
+                    .long("new-color")
+                    .about("Color for new text [word|ANSI|rr,gg,bb]")
+                    .value_name("COLOR")
+                    .takes_value(true),
+            )
+            .arg(
+                Arg::new("color_change")
+                    .long("change-color")
+                    .about("Color for changed text [word|ANSI|rr,gg,bb]")
+                    .value_name("COLOR")
+                    .takes_value(true),
+            )
+            .get_matches();
 
-        let mut args: Args = Default::default();
+        let interval = matches
+            .value_of("interval")
+            .and_then(|s| s.parse::<f32>().ok())
+            .unwrap_or(1.0);
+        let interval = Duration::from_secs_f32(interval);
 
-        let mut skip = false;
-        for i in 0..args_vec.len() {
-            if skip {
-                skip = false;
-                continue;
+        let show_diff = matches.is_present("show_diff");
+        let precise_mode = matches.is_present("precise_mode");
+        let exit_on_err = matches.is_present("exit_on_err");
+        let exit_on_change = matches.is_present("exit_on_change");
+
+        let mut color_new = ColorSpec::new();
+        let mut color_change = ColorSpec::new();
+
+        let col_new = matches
+            .value_of("color_new")
+            .and_then(|s| FromStr::from_str(s).ok())
+            .unwrap_or(Color::Green);
+
+        let col_change = matches
+            .value_of("color_change")
+            .and_then(|s| FromStr::from_str(s).ok())
+            .unwrap_or(Color::Cyan);
+
+        color_new.set_fg(Some(col_new));
+        color_change.set_fg(Some(col_change));
+
+        let (cmd, cmd_args) = match matches.subcommand() {
+            Some((external, ext_m)) => {
+                let ext_args = if let Some(args) = ext_m.values_of("") {
+                    args.map(String::from).collect()
+                } else {
+                    Vec::new()
+                };
+                (String::from(external), ext_args)
             }
-            if let Some(arg) = args_vec.get(i) {
-                if !arg.starts_with('-') {
-                    args_vec.drain(0..i);
-                    break;
-                }
-                if arg == "-n" || arg == "--interval" {
-                    if let Some(interval) = args_vec.get(i + 1).and_then(|s| s.parse::<f32>().ok())
-                    {
-                        args.interval = Duration::from_secs_f32(interval);
-                        skip = true;
-                    } else {
-                        return Err(Error::InvalidArgs("Invalid interval!"));
-                    };
-                } else if arg == "-d" || arg == "--differences" {
-                    args.show_diff = true;
-                } else if arg == "-p" || arg == "--precise" {
-                    args.precise_mode = true;
-                } else if arg == "-e" || arg == "--errexit" {
-                    args.exit_on_err = true;
-                } else if arg == "-g" || arg == "--chgexit" {
-                    args.exit_on_change = true;
-                } else if arg == "-h" || arg == "--help" {
-                    args.show_help = true;
-                } else if arg == "-v" || arg == "--version" {
-                    args.show_version = true;
-                }
+            _ => {
+                return Err(Error::InvalidArgs("No target command!"));
             }
-        }
+        };
 
-        if args_vec.is_empty() {
-            return Err(Error::InvalidArgs("No Target command!"));
-        }
-
-        args.cmd = args_vec.remove(0);
-        args.cmd_args = args_vec;
-
+        let args = Args {
+            interval,
+            show_diff,
+            precise_mode,
+            exit_on_err,
+            exit_on_change,
+            color_new,
+            color_change,
+            cmd,
+            cmd_args,
+        };
         Ok(args)
-    }
-}
-
-impl Default for Args {
-    fn default() -> Self {
-        Args {
-            interval: Duration::from_secs(1),
-            show_diff: false,
-            precise_mode: false,
-            exit_on_err: false,
-            exit_on_change: false,
-            show_help: false,
-            show_version: false,
-            cmd: String::from("neowatch"),
-            cmd_args: vec![String::from("--help")],
-        }
     }
 }
