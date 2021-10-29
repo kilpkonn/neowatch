@@ -63,13 +63,15 @@ impl Args {
             .arg(
                 Arg::new("color_new")
                     .long("new-color")
-                    .about("Color for new text")
+                    .about("Color for new text [word|ANSI|rr,gg,bb]")
+                    .value_name("COLOR")
                     .takes_value(true),
             )
             .arg(
                 Arg::new("color_change")
                     .long("change-color")
-                    .about("Color for changed text")
+                    .about("Color for changed text [word|ANSI|rr,gg,bb]")
+                    .value_name("COLOR")
                     .takes_value(true),
             )
             .get_matches();
