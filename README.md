@@ -1,6 +1,7 @@
 # neowatch
 
-![neowatch](https://user-images.githubusercontent.com/19900308/139091622-3e3fa37b-0bc0-41f4-a7c5-75df4f981fac.gif)
+![neowatch](https://user-images.githubusercontent.com/19900308/139555685-2d683646-1745-4cd5-a299-dcf5219108c0.gif)
+
 
 # Usage
 ```
