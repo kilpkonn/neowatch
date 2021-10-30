@@ -137,14 +137,14 @@ fn similarity(a: &str, b: &str) -> f32 {
     same_count as f32 / length as f32
 }
 
-fn find_numeric(a: &str, base: u32) -> Option<f32> {
+fn find_numeric(a: &str, radix: u32) -> Option<f32> {
     let mut start = None;
     let mut end = None;
     for (i, c) in a.char_indices() {
         if c == '.' {
             continue;
         }
-        if c.is_digit(base) {
+        if c.is_digit(radix) {
             if start.is_none() {
                 start = Some(i);
             }
@@ -152,8 +152,19 @@ fn find_numeric(a: &str, base: u32) -> Option<f32> {
         }
     }
 
+    use std::u32;
     match (start, end) {
-        (Some(s), Some(e)) => a[s..e].parse().ok(),
+        (Some(s), Some(e)) => {
+            if radix == 10 {
+                return a[s..e].parse().ok();
+            }
+            let data = &a[s..e];
+            if data.contains('.') {
+                return None;
+            }
+
+            u32::from_str_radix(data, radix).ok().map(|v| v as f32)
+        }
         (_, _) => None,
     }
 }

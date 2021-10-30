@@ -1,6 +1,6 @@
 use std::fmt::Display;
-use std::process::Termination;
 use std::io;
+use std::process::Termination;
 
 pub enum Error<'a> {
     InvalidArgs(&'a str),
@@ -17,7 +17,7 @@ impl From<Error<'_>> for i32 {
             Error::CouldNotSpawnProcess => 2,
             Error::ProcessFailed(_) => 4,
             Error::ProcessErrExit(code) => code,
-            Error::Io(_) => 5 // TODO: Recheck
+            Error::Io(_) => 5, // TODO: Recheck
         }
     }
 }
@@ -31,7 +31,7 @@ impl<'a> Display for Error<'a> {
             Error::ProcessErrExit(code) => {
                 write!(f, "Target command returned non-zero exit code: {}", code)
             }
-            Error::Io(err) => write!(f, "{}", err)
+            Error::Io(err) => write!(f, "{}", err),
         }
     }
 }

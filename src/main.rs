@@ -11,7 +11,6 @@ mod error;
 mod neowatch;
 mod signal;
 
-
 fn main() -> error::Exit<'static> {
     let args = match Args::new() {
         Ok(args) => args,
@@ -19,7 +18,7 @@ fn main() -> error::Exit<'static> {
     };
 
     signal::setup_handlers();
-    
+
     println!("\x1B[?1049h");
     let res = neowatch::run(args);
 

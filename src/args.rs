@@ -96,12 +96,14 @@ impl Args {
                 Arg::new("color_increase")
                     .long("increase-color")
                     .about("Color for increaseing numeric values")
+                    .value_name("COLOR")
                     .takes_value(true),
             )
             .arg(
                 Arg::new("color_decrease")
                     .long("decrease-color")
                     .about("Color for decreasing numeric values")
+                    .value_name("COLOR")
                     .takes_value(true),
             )
             .get_matches();
