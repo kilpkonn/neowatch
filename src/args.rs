@@ -33,48 +33,48 @@ impl Args {
                     .long("interval")
                     .value_name("SECS")
                     .default_value("1.0")
-                    .about("Set update insterval")
+                    .help("Set update insterval")
                     .takes_value(true),
             )
             .arg(
                 Arg::new("show_diff")
                     .short('d')
                     .long("differences")
-                    .about("Highlight differences since last update")
+                    .help("Highlight differences since last update")
                     .takes_value(false),
             )
             .arg(
                 Arg::new("precise")
                     .short('p')
                     .long("precise")
-                    .about("Attempt to run command at precise intervals")
+                    .help("Attempt to run command at precise intervals")
                     .takes_value(false),
             )
             .arg(
                 Arg::new("exit_on_err")
                     .short('e')
                     .long("errexit")
-                    .about("Exit on non-zero return code")
+                    .help("Exit on non-zero return code")
                     .takes_value(false),
             )
             .arg(
                 Arg::new("exit_on_change")
                     .short('g')
                     .long("chgexit")
-                    .about("Exit on output change")
+                    .help("Exit on output change")
                     .takes_value(false),
             )
             .arg(
                 Arg::new("color_new")
                     .long("new-color")
-                    .about("Color for new text [word|ANSI|rr,gg,bb]")
+                    .help("Color for new text [word|ANSI|rr,gg,bb]")
                     .value_name("COLOR")
                     .takes_value(true),
             )
             .arg(
                 Arg::new("color_change")
                     .long("change-color")
-                    .about("Color for changed text [word|ANSI|rr,gg,bb]")
+                    .help("Color for changed text [word|ANSI|rr,gg,bb]")
                     .value_name("COLOR")
                     .takes_value(true),
             )
@@ -82,27 +82,27 @@ impl Args {
                 Arg::new("number_diff")
                     .short('z')
                     .long("number-changes")
-                    .about("Highlight number changes based on increase/decrease")
+                    .help("Highlight number changes based on increase/decrease")
                     .takes_value(false),
             )
             .arg(
                 Arg::new("radix")
                     .long("radix")
-                    .about("Radix for numbers")
+                    .help("Radix for numbers")
                     .default_value("10")
                     .takes_value(true),
             )
             .arg(
                 Arg::new("color_increase")
                     .long("increase-color")
-                    .about("Color for increaseing numeric values")
+                    .help("Color for increaseing numeric values")
                     .value_name("COLOR")
                     .takes_value(true),
             )
             .arg(
                 Arg::new("color_decrease")
                     .long("decrease-color")
-                    .about("Color for decreasing numeric values")
+                    .help("Color for decreasing numeric values")
                     .value_name("COLOR")
                     .takes_value(true),
             )
