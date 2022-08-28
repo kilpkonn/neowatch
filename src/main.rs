@@ -1,6 +1,3 @@
-#![feature(termination_trait_lib)]
-#![feature(int_abs_diff)]
-
 extern crate clap;
 
 use crate::args::Args;
