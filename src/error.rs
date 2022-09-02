@@ -1,6 +1,6 @@
 use std::fmt::Display;
 use std::io;
-use std::process::Termination;
+use std::process::{Termination, ExitCode};
 
 pub enum Error<'a> {
     InvalidArgs(&'a str),
@@ -10,14 +10,15 @@ pub enum Error<'a> {
     Io(io::Error),
 }
 
-impl From<Error<'_>> for i32 {
+impl From<Error<'_>> for ExitCode {
     fn from(err: Error) -> Self {
         match err {
-            Error::InvalidArgs(_) => 1,
-            Error::CouldNotSpawnProcess => 2,
-            Error::ProcessFailed(_) => 4,
-            Error::ProcessErrExit(code) => code,
-            Error::Io(_) => 5, // TODO: Recheck
+            Error::InvalidArgs(_) => ExitCode::from(1),
+            Error::CouldNotSpawnProcess => ExitCode::from(2),
+            Error::ProcessFailed(_) => ExitCode::from(4),
+            // TODO: Properly handle not so common codes
+            Error::ProcessErrExit(code) => ExitCode::from(code as u8),
+            Error::Io(_) => ExitCode::from(5), // TODO: Recheck
         }
     }
 }
@@ -45,11 +46,11 @@ impl<'a> From<Result<(), Error<'a>>> for Exit<'a> {
 }
 
 impl<'a> Termination for Exit<'a> {
-    fn report(self) -> i32 {
+    fn report(self) -> ExitCode {
         match self.0 {
             Ok(_) => {
                 println!("\x1B[?1049l");
-                0
+                ExitCode::SUCCESS
             }
             Err(err) => {
                 println!("\x1B[?1049l");
