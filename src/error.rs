@@ -5,6 +5,7 @@ use std::process::{Termination, ExitCode};
 pub enum Error<'a> {
     InvalidArgs(&'a str),
     CouldNotSpawnProcess,
+    CouldNotSetSignalHandler,
     ProcessFailed(String),
     ProcessErrExit(i32),
     Io(io::Error),
@@ -15,6 +16,7 @@ impl From<Error<'_>> for ExitCode {
         match err {
             Error::InvalidArgs(_) => ExitCode::from(1),
             Error::CouldNotSpawnProcess => ExitCode::from(2),
+            Error::CouldNotSetSignalHandler => ExitCode::from(1),
             Error::ProcessFailed(_) => ExitCode::from(4),
             // TODO: Properly handle not so common codes
             Error::ProcessErrExit(code) => ExitCode::from(code as u8),
@@ -28,6 +30,7 @@ impl<'a> Display for Error<'a> {
         match self {
             Error::InvalidArgs(msg) => write!(f, "Invalid arguments: {}", msg),
             Error::CouldNotSpawnProcess => write!(f, "Could not spawn child process"),
+            Error::CouldNotSetSignalHandler => write!(f, "Could not set signal handler"),
             Error::ProcessFailed(msg) => write!(f, "Process failed: {}", msg),
             Error::ProcessErrExit(code) => {
                 write!(f, "Target command returned non-zero exit code: {}", code)

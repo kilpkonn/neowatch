@@ -6,7 +6,6 @@ use crate::error::Exit;
 mod args;
 mod error;
 mod neowatch;
-mod signal;
 
 fn main() -> error::Exit<'static> {
     let args = match Args::new() {
@@ -14,7 +13,12 @@ fn main() -> error::Exit<'static> {
         Err(err) => return Exit::from(Err(err)),
     };
 
-    signal::setup_handlers();
+    if let Err(_) = ctrlc::set_handler(|| {
+        println!("\x1B[?1049l");
+        std::process::exit(0)
+    }) {
+        return Exit::from(Err(error::Error::CouldNotSetSignalHandler));
+    }
 
     println!("\x1B[?1049h");
     let res = neowatch::run(args);
