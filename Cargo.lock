@@ -59,7 +59,7 @@ checksum = "8371e4e5341c3a96db127eb2465ac681ced4c433e01dd0e938adbef26ba93ba5"
 
 [[package]]
 name = "neowatch"
-version = "0.1.2"
+version = "0.1.3"
 dependencies = [
  "clap",
  "libc",
