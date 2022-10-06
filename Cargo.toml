@@ -19,6 +19,7 @@ lto = true
 debug = false
 codegen-units = 1
 panic = "abort"
+strip = "symbols"
 
 [[bin]]
 name = "neowatch"
