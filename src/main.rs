@@ -13,10 +13,11 @@ fn main() -> error::Exit<'static> {
         Err(err) => return Exit::from(Err(err)),
     };
 
-    if let Err(_) = ctrlc::set_handler(|| {
+    let handler = || {
         println!("\x1B[?1049l");
         std::process::exit(0)
-    }) {
+    };
+    if ctrlc::set_handler(handler).is_err() {
         return Exit::from(Err(error::Error::CouldNotSetSignalHandler));
     }
 

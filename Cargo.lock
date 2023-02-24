@@ -57,7 +57,7 @@ checksum = "329c933548736bc49fd575ee68c89e8be4d260064184389a5b77517cddd99ffb"
 
 [[package]]
 name = "neowatch"
-version = "0.2.1-rc0"
+version = "0.2.1"
 dependencies = [
  "clap",
  "ctrlc",

@@ -1,6 +1,6 @@
 use std::fmt::Display;
 use std::io;
-use std::process::{Termination, ExitCode};
+use std::process::{ExitCode, Termination};
 
 pub enum Error<'a> {
     InvalidArgs(&'a str),
