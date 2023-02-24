@@ -1,5 +1,7 @@
 # neowatch
 
+[![crates.io](https://img.shields.io/badge/crates.io-v0.2.1-green)](https://crates.io/crates/neowatch)
+
 ![neowatch](https://user-images.githubusercontent.com/19900308/139555685-2d683646-1745-4cd5-a299-dcf5219108c0.gif)
 
 
