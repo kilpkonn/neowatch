@@ -16,8 +16,9 @@ pub struct Args {
     pub color_change: ColorSpec,
     pub color_increase: ColorSpec,
     pub color_decrease: ColorSpec,
-    pub cmd: String,
-    pub cmd_args: Vec<OsString>,
+    pub shell: OsString,
+    pub shell_args: Vec<OsString>,
+    pub cmd: OsString,
 }
 
 impl Args {
@@ -100,7 +101,7 @@ impl Args {
             .arg(
                 Arg::new("color_increase")
                     .long("increase-color")
-                    .help("Color for increaseing numeric values")
+                    .help("Color for increasing numeric values")
                     .value_name("COLOR")
                     .num_args(1)
                     .action(ArgAction::Set),
@@ -113,6 +114,15 @@ impl Args {
                     .num_args(1)
                     .action(ArgAction::Set),
             )
+            .arg(
+                Arg::new("exec")
+                    .short('x')
+                    .long("exec")
+                    .help("Pass command to exec instead of `sh -c`")
+                    .default_value("sh -c")
+                    .value_name("SHELL")
+                    .num_args(1),
+            )
             .get_matches();
 
         let interval = matches
@@ -120,6 +130,16 @@ impl Args {
             .and_then(|s| s.parse::<f32>().ok())
             .unwrap_or(1.0);
         let interval = Duration::from_secs_f32(interval);
+
+        let (shell, shell_args) = matches
+            .get_one::<String>("exec")
+            .and_then(|it| {
+                let mut split = it.split(' ');
+                let cmd = split.next().map(OsString::from)?;
+                let args = split.map(OsString::from).collect();
+                Some((cmd, args))
+            })
+            .unwrap_or((OsString::from("sh"), vec![OsString::from("-c")]));
 
         let show_diff = matches.get_flag("show_diff");
         let precise_mode = matches.get_flag("precise");
@@ -162,15 +182,18 @@ impl Args {
         color_increase.set_fg(Some(col_increase));
         color_decrease.set_fg(Some(col_decrease));
 
-        let (cmd, cmd_args) = match matches.subcommand() {
-            Some((external, ext_m)) => {
-                let ext_args = if let Some(args) = ext_m.get_many::<OsString>("") {
-                    args.map(OsString::to_owned).collect()
-                } else {
-                    Vec::new()
-                };
-                (String::from(external), ext_args)
-            }
+        let cmd = match matches.subcommand() {
+            Some((external, ext_m)) => ext_m
+                .get_many::<OsString>("")
+                .map(|args| {
+                    args.fold(OsString::from(external), |mut acc, it| {
+                        acc.reserve(it.len() + 1);
+                        acc.push(" ");
+                        acc.push(it);
+                        acc
+                    })
+                })
+                .unwrap_or_else(|| OsString::from(external)),
             _ => {
                 return Err(Error::InvalidArgs("No target command!"));
             }
@@ -188,8 +211,9 @@ impl Args {
             color_change,
             color_increase,
             color_decrease,
+            shell,
+            shell_args,
             cmd,
-            cmd_args,
         };
         Ok(args)
     }

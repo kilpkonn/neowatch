@@ -25,7 +25,7 @@ impl From<Error<'_>> for ExitCode {
     }
 }
 
-impl<'a> Display for Error<'a> {
+impl Display for Error<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Error::InvalidArgs(msg) => write!(f, "Invalid arguments: {}", msg),
@@ -48,7 +48,7 @@ impl<'a> From<Result<(), Error<'a>>> for Exit<'a> {
     }
 }
 
-impl<'a> Termination for Exit<'a> {
+impl Termination for Exit<'_> {
     fn report(self) -> ExitCode {
         match self.0 {
             Ok(_) => {
