@@ -21,8 +21,9 @@ pub fn run(args: Args) -> Result<(), Error<'static>> {
     loop {
         write!(&mut buffer, "\x1B[2J\x1B[1;1H").map_err(Error::Io)?;
         let start = Instant::now();
-        let process = Command::new(&args.cmd)
-            .args(&args.cmd_args)
+        let process = Command::new(&args.shell)
+            .args(&args.shell_args)
+            .arg(&args.cmd)
             .stdin(Stdio::inherit())
             .stdout(Stdio::piped())
             .stderr(Stdio::inherit())
@@ -152,7 +153,6 @@ fn find_numeric(a: &str, radix: u32) -> Option<f32> {
         }
     }
 
-    use std::u32;
     match (start, end) {
         (Some(s), Some(e)) => {
             if radix == 10 {
